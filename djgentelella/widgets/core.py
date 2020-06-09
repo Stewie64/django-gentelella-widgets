@@ -1,3 +1,5 @@
+import json
+
 from django.forms import (PasswordInput as DJPasswordInput, FileInput as DJFileInput,
                           ClearableFileInput as DJClearableFileInput, Textarea as DJTextarea,
                           DateInput as DJDateInput, DateTimeInput as DJDateTimeInput,
@@ -6,9 +8,30 @@ from django.forms import (PasswordInput as DJPasswordInput, FileInput as DJFileI
                           CheckboxSelectMultiple as DJCheckboxSelectMultiple, SelectMultiple as DJSelectMultiple,
                           SelectDateWidget as DJSelectDateWidget, SplitDateTimeWidget as DJSplitDateTimeWidget)
 from django.forms.widgets import Input as DJInput
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse
 from django.utils.translation import gettext as _
+from django import forms
+from django.forms.utils import flatatt
+from django.template.defaultfilters import force_escape
+from django.template.loader import render_to_string
+from django.utils.encoding import force_text
+from django.utils.module_loading import import_string
+from django.utils.safestring import mark_safe
+from django.conf import settings
+from djgentelella import registry
 
+
+def _media(self):
+    js = ['admin/js/jquery.init.js']
+
+    # Unless AJAX_SELECT_BOOTSTRAP == False
+    # then load include bootstrap which will load jquery and jquery ui + default css as needed
+    if getattr(settings, "AJAX_SELECT_BOOTSTRAP", True):
+        js.append('ajax_select/js/bootstrap.js')
+
+    js.append('ajax_select/js/ajax_select.js')
+
+    return forms.Media(css={'all': ('ajax_select/css/ajax_select.css',)}, js=js)
 
 def update_kwargs(attrs, widget, base_class='form-control '):
     if attrs is not None:
@@ -403,3 +426,97 @@ class DateRangeInput(DJDateInput):
     def __init__(self, attrs=None, format=None):
         attrs = update_kwargs(attrs, self.__class__.__name__)
         super().__init__(attrs, format=format)
+
+json_encoder = import_string(getattr(settings, 'AJAX_SELECT_JSON_ENCODER',
+                                     'django.core.serializers.json.DjangoJSONEncoder'))
+
+
+class AutocompleteWidget(TextInput):
+
+    channel = None
+    help_text = ''
+    html_id = ''
+
+    def __init__(self,
+                 channel,
+                 help_text='',
+                 show_help_text=True,
+                 plugin_options=None,
+                 *args,
+                 **kwargs):
+        self.plugin_options = plugin_options or {}
+        super(TextInput, self).__init__(*args, **kwargs)
+        self.channel = channel
+        self.help_text = help_text
+        self.show_help_text = show_help_text
+
+    def render(self, name, value, attrs=None, renderer=None, **_kwargs):
+        value = value or ''
+
+        final_attrs = self.build_attrs(self.attrs)
+        final_attrs.update(attrs or {})
+        final_attrs.pop('required', None)
+        self.html_id = final_attrs.pop('id', name)
+
+        current_repr = ''
+        initial = None
+        lookup = registry.get(self.channel)
+        if value:
+            objs = lookup.get_objects([value])
+            try:
+                obj = objs[0]
+            except IndexError:
+                raise Exception("%s cannot find object:%s" % (lookup, value))
+            current_repr = lookup.format_item_display(obj)
+            initial = [current_repr, obj.pk]
+
+        if self.show_help_text:
+            help_text = self.help_text
+        else:
+            help_text = ''
+
+        context = {
+            'name': name,
+            'html_id': self.html_id,
+            'current_id': value,
+            'current_repr': current_repr,
+            'help_text': help_text,
+            'extra_attrs': mark_safe(flatatt(final_attrs)),
+            'func_slug': self.html_id.replace("-", ""),
+            'add_link': self.add_link,
+        }
+        context.update(
+            make_plugin_options(lookup, self.channel, self.plugin_options, initial))
+        templates = (
+            'ajax_select/autocompleteselect_%s.html' % self.channel,
+            'ajax_select/autocompleteselect.html')
+        out = render_to_string(templates, context)
+        return mark_safe(out)
+
+    def value_from_datadict(self, data, files, name):
+        return data.get(name, None)
+
+    def id_for_label(self, id_):
+        return '%s_text' % id_
+
+
+def make_plugin_options(lookup, channel_name, widget_plugin_options, initial):
+    """ Make a JSON dumped dict of all options for the jQuery ui plugin."""
+    po = {}
+    if initial:
+        po['initial'] = initial
+    po.update(getattr(lookup, 'plugin_options', {}))
+    po.update(widget_plugin_options)
+    if not po.get('source'):
+        po['source'] = reverse('ajax_lookup', kwargs={'channel': channel_name})
+
+    # allow html unless explicitly set
+    if po.get('html') is None:
+        po['html'] = True
+
+    return {
+        'plugin_options': mark_safe(json.dumps(po, cls=json_encoder)),
+        'data_plugin_options': force_escape(
+                json.dumps(po, cls=json_encoder)
+        )
+    }

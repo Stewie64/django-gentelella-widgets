@@ -20,6 +20,7 @@ class LookupChannel(object):
 
     model = None
     url = None
+    filters = None
     plugin_options = {}
     min_length = 1
 
@@ -35,12 +36,16 @@ class LookupChannel(object):
         Returns:
             (QuerySet, list, generator): iterable of related_models
         """
-        kwargs = {"%s__icontains" % self.search_field: q}
+        if self.filters:
+            kwargs = self.get_filters(q)
+        else:
+            kwargs = {"%s__icontains" % self.search_field: q}
+
         if self.url:
             queryset = reverse(self.url)
-            return queryset.filter(**kwargs).order_by(self.search_field)
+            return queryset.filter(**kwargs)
         if self.model:
-            return self.model.objects.filter(**kwargs).order_by(self.search_field)
+            return self.model.objects.filter(**kwargs)
 
     def get_result(self, obj):
         """
@@ -130,3 +135,10 @@ class LookupChannel(object):
         """
         if not request.user.is_staff:
             raise PermissionDenied
+
+    def get_filters(self, q):
+        filter_list = {}
+        if self.filters:
+            for filter_param in self.filters:
+                filter_list.update({"%s__icontains" % filter_param: q})
+        return filter_list

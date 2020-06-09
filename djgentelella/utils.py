@@ -1,5 +1,6 @@
 from django.core.cache import cache
 
+
 from djgentelella.models import GentelellaSettings
 
 
@@ -26,3 +27,6 @@ def set_settings(key, value):
         instance.save()
     else:
         GentelellaSettings.objects.create(key=key, value=value)
+
+
+
