@@ -4,3 +4,19 @@
   </optgroup>{% endif %}{% endfor %}
 </select>
 
+<script>
+  $( "input[name={{ widget.name }}]" ).on("keypress",'id_input',function(){
+    var val = $(this).val();
+    $.ajax({
+        url:{{url}},
+        type:"GET",
+        data:{
+            val:val,
+        },
+        success:function(data){
+            if(data.exist)
+                alert('Already Exist')
+        },
+    });
+});
+</script>

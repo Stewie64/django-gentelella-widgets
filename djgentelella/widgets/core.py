@@ -403,3 +403,24 @@ class DateRangeInput(DJDateInput):
     def __init__(self, attrs=None, format=None):
         attrs = update_kwargs(attrs, self.__class__.__name__)
         super().__init__(attrs, format=format)
+
+
+class AutoCompleteSelect(DJSelect):
+    input_type = 'select'
+    template_name = 'gentelella/widgets/autocomplete_select.html'
+    option_template_name = 'gentelella/widgets/autocomplete_select_option.html'
+
+    def __init__(self, attrs=None, choices=(), extraskwargs=True, url=None):
+        if extraskwargs:
+            attrs = update_kwargs(attrs, self.__class__.__name__, base_class='select2_single form-control ')
+        if url:
+            self.url = url
+        super().__init__(attrs, choices=choices)
+
+    def get_context(self, name, value, attrs):
+        context = super().get_context(name, value, attrs)
+        if self.allow_multiple_selected:
+            context['widget']['attrs']['multiple'] = True
+        if self.url:
+            context['url'] = self.url
+        return context
