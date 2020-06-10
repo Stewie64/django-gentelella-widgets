@@ -1,0 +1,11 @@
+<select style="width: 400px" class="js-data-example-ajax" {{multiple}}></select>
+
+<script>
+$('.js-data-example-ajax').select2({
+  ajax: {
+    url: '{{ url }}',
+    dataType: 'json'
+    // Additional AJAX parameters go here; see the end of this chapter for the full code of this example
+  }
+});
+</script>
