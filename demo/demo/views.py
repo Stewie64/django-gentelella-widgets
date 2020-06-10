@@ -14,7 +14,7 @@ from djgentelella.widgets import numberknobinput as knobwidget
 
 class ExampleForm(CustomForm):
 
-    autocomplete_select = forms.ChoiceField(widget=genwidgets.AutocompleteSelect(attrs={'url': 'luisza-list'}))
+    autocomplete_select = forms.ChoiceField(widget=genwidgets.AutocompleteSelect(multiple=True, attrs={'url': 'luisza-list'}))
 
     your_name = forms.CharField(label='Your name', max_length=100, widget=genwidgets.TextInput)
 
