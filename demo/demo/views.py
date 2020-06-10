@@ -5,7 +5,7 @@ from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.urls import reverse_lazy
 from django.utils.timezone import now
-
+from rest_framework.reverse import reverse
 
 from djgentelella.forms.forms import CustomForm
 from djgentelella.widgets import core as genwidgets
@@ -13,6 +13,8 @@ from djgentelella.widgets import numberknobinput as knobwidget
 
 
 class ExampleForm(CustomForm):
+
+    autocomplete_select = forms.ChoiceField(widget=genwidgets.AutocompleteSelect(attrs={'url': 'luisza-list'}))
 
     your_name = forms.CharField(label='Your name', max_length=100, widget=genwidgets.TextInput)
 
