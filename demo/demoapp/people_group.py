@@ -11,7 +11,8 @@ class PeopleGroupForm(CustomForm, forms.ModelForm):
         model = PeopleGroup
         fields = '__all__'
         widgets = {
-            'people': AutocompleteSelectMultiple(baseurl="personbasename-list")
+            'people': AutocompleteSelectMultiple(baseurl="personbasename-list"),
+            'comunities': AutocompleteSelectMultiple(baseurl="comunitybasename-list")
         }
 
 class PeopleGroupAdd(CreateView):
