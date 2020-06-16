@@ -18,7 +18,7 @@ class AutocompleteSelectBase(Select):
             self.baseurl = self.baseurl
 
         if multiple:
-            attrs['multiple']=True
+            attrs['multiple']="multiple"
         super().__init__(attrs,  choices=choices, extraskwargs=False)
 
     def get_context(self, name, value, attrs):
@@ -28,6 +28,8 @@ class AutocompleteSelectBase(Select):
 
 class AutocompleteSelectMultipleBase(AutocompleteSelectBase):
     baseurl = None
+    allow_multiple_selected = True
+
     def __init__(self, attrs=None, choices=(), extraskwargs=True):
         if extraskwargs:
             attrs = update_kwargs(attrs, 'AutocompleteSelectMultiple',  base_class='form-control ')
