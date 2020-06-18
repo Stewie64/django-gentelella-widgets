@@ -149,9 +149,7 @@ There are several widgets implemented this is a list of what you can use
 - EmailMaskInput
 - DateRangeTimeInput
 - DateRangeInput
-- AutocompleteSelect (works with lookup views, check usage above)
-- AutocompleteSelectMultiple (works with lookup views, check usage above)
-
-
+- AutocompleteSelect
+- AutocompleteSelectMultiple
 
 

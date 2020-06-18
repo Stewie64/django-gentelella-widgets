@@ -6,14 +6,27 @@ from djgentelella.forms.forms import CustomForm
 from djgentelella.widgets.selects import AutocompleteSelect, AutocompleteSelectMultiple
 
 
+#from django.db.models.fields.related import ManyToManyField
+def formfield_callback_fnc(db_field, **kwargs):
+
+    if 'widget' in kwargs:
+        print( kwargs['widget'].__name__, kwargs)
+    return db_field.formfield(**kwargs)
+
+
 class PeopleGroupForm(CustomForm, forms.ModelForm):
+   # formfield_callback = formfield_callback_fnc
+
     class Meta:
         model = PeopleGroup
         fields = '__all__'
         widgets = {
-            'people': AutocompleteSelectMultiple(baseurl="personbasename-list"),
-            'comunities': AutocompleteSelectMultiple(baseurl="comunitybasename-list")
+            'people': AutocompleteSelect("personbasename-list"),
+            'comunities': AutocompleteSelectMultiple("comunitybasename-list")
         }
+
+
+
 
 class PeopleGroupAdd(CreateView):
     model = PeopleGroup
